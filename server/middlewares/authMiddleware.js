@@ -2,7 +2,9 @@ import jwt from "jsonwebtoken"
 
 export default async(req, res, next) =>{
     try {
-        const token = req.header('Authorization').split(" ")[1];
+        const authHeader = req.header('Authorization');
+        console.log(authHeader);
+        const token = authHeader.split(" ")[1];
         jwt.verify(token, process.env.JWT_SECRET, (err, decode) => {
         if(err){
             console.log(err)

@@ -39,7 +39,9 @@ function TestPage() {
       const res = await axios.get(`/api/v1/test/getTestDetails/${testId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+          'Cache-Control': 'no-cache', // Indique de ne pas utiliser le cache
+          'Pragma': 'no-cache', // Pour les navigateurs plus anciens
+        },      
       });
       if (res.data.success) {
         const test = res.data.test;
@@ -58,7 +60,9 @@ function TestPage() {
 
   useEffect(() => {
 
-    getTestDetails();
+    if (testId) {
+      getTestDetails();
+    }
 
     const requestFullScreen = () => {
       const element = document.documentElement;
@@ -91,7 +95,14 @@ function TestPage() {
     return () => {
       document.removeEventListener("click", handleFullScreenRequest);
     };
-  }, []);
+
+  }, [testId]);
+
+  useEffect(() => {
+    // Met à jour `answers` chaque fois que `testDetails` change
+    const initialAnswers = (testDetails?.questionSet ?? []).map(() => null);
+    setAnswers(initialAnswers);
+  }, [testDetails]);
 
 
 
@@ -146,63 +157,57 @@ document.addEventListener("visibilitychange", () => {
   };
 
   return (
-    <>
-      <h1 className="text-3xl text-center my-3 font-serif">{testDetails?.testName}</h1>
-      <form className=" flex flex-col justify-center items-center min-h-screen border-1 border-black">
-        <div className="ml-2 self-start">
-          {testDetails?.questionSet?.map((question, index) => (
-            <div key={index} className="clear-both">
-              <p>
-                <strong>Q.{index + 1}.</strong> {question.question}
-              </p>
-              {question.options.map((option, optionIndex) => (
-                <div key={optionIndex} className="flex items-center">
-                  <input
-                    type="radio"
-                    id={`q${index}-option${optionIndex}`}
-                    name={`q${index}`}
-                    value={optionIndex}
-                    checked={
-                      answers[index] !== null &&
-                      answers[index]?.index === optionIndex + 1
-                    }
-                    onChange={() => handleOptionSelect(index, optionIndex)}
-                    className="w-5 h-5"
-                  />
-
-                  <label
-                    style={{ cursor: "pointer" }}
-                    className="text-start w-screen p-2 rounded-lg bg-white my-2 mx-2 flex-shrink-0 max-w-2xl"
-                    htmlFor={`q${index}-option${optionIndex}`}
-                  >
-                    {option}
-                  </label>
-                </div>
-              ))}
-              <button
-                className=" flex text-center items-center h-8 w-24 my-3 bg-red-400 text-white font-semibold rounded-md float-right"
-                type="button"
-                onClick={() => handleClearOption(index)}
+<>
+  <h1 className="text-3xl text-center my-5 font-serif text-blue-900"> {testDetails?.testName} </h1>
+  <form className="flex flex-col items-center min-h-screen p-5 bg-gray-50 shadow-lg rounded-lg">
+    <div className="w-full max-w-4xl">
+      {testDetails?.questionSet?.map((question, index) => (
+        <div key={index} className="p-5 mb-5 bg-white border border-gray-200 rounded-lg shadow-sm">
+          <p className="mb-4 text-lg font-medium text-gray-900">
+            Q.{index + 1}. {question.question}
+          </p>
+          {question.options.map((option, optionIndex) => (
+            <div key={optionIndex} className="flex items-center mb-2">
+              <input
+                type="radio"
+                id={`q${index}-option${optionIndex}`}
+                name={`q${index}`}
+                value={optionIndex}
+                checked={answers[index] !== null && answers[index]?.index === optionIndex + 1}
+                onChange={() => handleOptionSelect(index, optionIndex)}
+                className="w-5 h-5 text-blue-600 focus:ring-blue-500 border-gray-300"
+              />
+              <label
+                htmlFor={`q${index}-option${optionIndex}`}
+                className="ml-2 block text-sm font-normal text-gray-800 cursor-pointer"
               >
-                Clear Option
-              </button>
+                {option}
+              </label>
             </div>
           ))}
+          <button
+            className="mt-3 py-2 px-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded shadow"
+            type="button"
+            onClick={() => handleClearOption(index)}
+          >
+            Clear Option
+          </button>
         </div>
+      ))}
+    </div>
+    <button
+      className="mt-5 py-2 px-6 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded shadow-lg transition duration-200"
+      type="button"
+      onClick={handleSubmit}
+    >
+      Submit
+    </button>
+  </form>
+  <div className="stream-area mt-5 rounded overflow-hidden shadow-lg">
+    <img src={`http://localhost:9000/stream`} alt="Live Streaming" className="w-full" />
+  </div>
+</>
 
-        <button
-          className="text-center self-end w-48 my-5 py-2 bg-blue-800 shadow-lg shadow-teal-500/50 hover:shadow-teal-500/40 text-white font-semibold rounded-lg"
-          type="button"
-          onClick={handleSubmit}
-        >
-          Submit
-        </button>
-      </form>
-      <div className="stream-area z-99 rounded">
-
-        <img src={`http://localhost:9000/stream`} alt="Live Streaming" />
-      </div>
-    </>
   );
 }
 

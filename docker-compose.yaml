@@ -10,8 +10,8 @@ services:
     volumes:
       - .:/app  
     environment:
-      # - MONGODB_URL= <pase your mongodb url>
-      # - JWT_SECRET= <write your jwt secret key>
+      - MONGODB_URL=mongodb+srv://admin:admin@cluster1.uyblqtj.mongodb.net/test
+      - JWT_SECRET=test
 
   flask-app:
     image: flask-app
@@ -22,4 +22,7 @@ services:
       - "9000:9000"
     volumes:
       - ./AI-Section:/app
+    devices:
+      - "/dev/video0:/dev/video0"
+
    

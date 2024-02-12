@@ -12,7 +12,7 @@ class phone_detection:
         # output = network.forward()[0]
         img = cv2.resize(image,(640,640))
         img = img.astype('float32') / 255.0
-        path = 'AI-Section/best.onnx'
+        path = 'best.onnx'
         image_transposed = np.transpose(img, (2, 0, 1))
         model_input = np.expand_dims(image_transposed,axis = 0)
         session = onnxruntime.InferenceSession(path,None)

@@ -31,6 +31,38 @@ const createTestController = async (req, res) => {
     }
 };
 
+
+// Dans testCtrl.js
+
+const getSubmissionsController = async (req, res) => {
+    try {
+      const { testId } = req.params;
+      // Supposons que `testModel` est votre modèle Mongoose pour les tests
+      const test = await testModel.findById(testId)
+        .populate('studentsJoined.userId', 'name email'); // Assurez-vous d'ajuster les champs selon votre modèle d'utilisateur
+  
+      if (!test) {
+        return res.status(404).json({ success: false, message: "Test not found" });
+      }
+  
+      // Les soumissions sont directement liées aux élèves ayant rejoint le test
+      const submissions = test.studentsJoined.map(submission => ({
+        userId: submission.userId, // Ou tout autre identifiant unique
+        score: submission.score,
+        totalScore: submission.totalScore,
+        activities: submission.activities,
+        tabCounts: submission.tabCounts
+      }));
+  
+      res.status(200).json({ success: true, submissions });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ success: false, message: `Server error: ${error.message}` });
+    }
+  };
+  
+  
+
 const getTestDetailsController = async (req, res) => {
     try {
         const { testId } = req.params;
@@ -43,7 +75,7 @@ const getTestDetailsController = async (req, res) => {
             return res.status(404).send({ message: 'Test not found', success: false });
         }
         const InstitutionDetails = await userModel.findById(test.institutionID);
-
+        res.set('Cache-Control', 'no-store');
         res.status(200).send({ message: 'Test Details fetched successfully', success: true, test, InstitutionDetails });
     } catch (error) {
         console.log(error);
@@ -119,4 +151,4 @@ const getResultsController = async (req, res) => {
   
   
 
-export { createTestController , getTestDetailsController, submitTestController, getResultsController};
+export { createTestController , getSubmissionsController, getTestDetailsController, submitTestController, getResultsController};
