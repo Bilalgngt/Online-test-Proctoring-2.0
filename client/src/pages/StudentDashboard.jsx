@@ -31,9 +31,11 @@ const StudentDashboard = () => {
       } else {
         message.error(res.data.message);
       }
+
+
     } catch (error) {
       console.log(error);
-      message.error("Something went wrong");
+      message.error("Tests went wrong");
     }
   };
 

@@ -20,6 +20,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "9000:9000"
+      - "12345:12345"
     volumes:
       - ./AI-Section:/app
     devices:

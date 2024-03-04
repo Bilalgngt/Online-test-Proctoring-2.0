@@ -51,3 +51,18 @@ Make sure you have Docker installed on your system:
 - You can change the ports for local system according to your need or just ensure no other services are using the specified ports (`3000`, `4000`, `9000`) to avoid conflicts.
 
 ---
+
+### Licence
+
+This project is a fork of the following project : [Online-test-Proctoring-2.0](https://github.com/SinghAnkit1010/Online-test-Proctoring-2.0)
+
+Licence : [Creative Commons Attribution-ShareAlike 4.0 International License][cc-by-sa].
+
+Shield : [![CC BY-SA 4.0][cc-by-sa-shield]][cc-by-sa]
+
+[![CC BY-SA 4.0][cc-by-sa-image]][cc-by-sa]
+
+[cc-by-sa]: http://creativecommons.org/licenses/by-sa/4.0/
+[cc-by-sa-image]: https://licensebuttons.net/l/by-sa/4.0/88x31.png
+[cc-by-sa-shield]: https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg
+

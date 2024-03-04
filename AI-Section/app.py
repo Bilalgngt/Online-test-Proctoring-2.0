@@ -7,6 +7,14 @@ from phone_detector import phone_detection
 from flask import Flask,render_template,request,redirect,url_for,session,Response,jsonify
 from flask_restful import Api, Resource, reqparse
 from flask_cors import CORS, cross_origin
+from flask_executor import Executor
+import socket
+from _thread import start_new_thread
+from threading import Thread
+
+# Tell which phones are connected
+teles_conn =[]
+info_tel ="nn_conns"
 
 
 
@@ -15,6 +23,13 @@ CORS(app)
 api = Api(app)
 
 print("welcome from flask")
+
+info = "Aucun téléphone connecté pour l instant"
+tel_conns = "non"
+##### 
+UPLOAD_FOLDER = 'static/img'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 mp_face_detection = mp.solutions.face_detection
 face_detection = mp_face_detection.FaceDetection(model_selection = 1,min_detection_confidence = 0.5)
@@ -173,7 +188,65 @@ def video_streaming():
     capture.release()
     cv2.destroyAllWindows()
 
+def message_recu(data):
+    # global fraud_arms
+    if(data):
+        if(data[0] == 'B'):
+            print('Données de bras reçu')
+            #ndf = detect_cheat_arm(data)
+            
+            #print(type(ndf))
 
+    if(len(teles_conn) <2):
+        if(data == 'STARTED_HEAD'):
+            teles_conn.append('Le téléphone de la tête est connecté\n')
+        if(data == 'STARTED_ARM'):
+            teles_conn.append('Le téléphone du bras est connecté\n')    
+
+def lancer_socket(p):
+
+    nb_max_connex = 5
+    port=p
+    s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    IP = '0.0.0.0'
+    s.bind((IP,port))
+    s.listen(nb_max_connex)
+
+    print(f"Le serveur est lancé sur {IP} sur le port {port}.")
+    return s
+
+def threaded_client(connexion):
+    #connexion.send("Connecté au système.\r\n".encode("UTF-8"))
+    
+    while True:
+        data = connexion.recv(2048).decode()
+        message_recu(data)
+        print(data)
+        
+        #connexion.send("Données reçues.\r\n".encode("UTF-8"))
+        if not data:
+            break
+       
+    connexion.close()
+
+def accepter_msg(socket):
+    
+    while True:
+        print('accepte les connexions...')
+        Client, addresse = socket.accept()
+        print('Connecté à: ' + addresse[0] + ':' + str(addresse[1]))
+        start_new_thread(threaded_client, (Client, ))
+
+# executor = Executor(app)
+# '''s = lancer_socket(12345)
+# def accepter(s):    
+#     executor.submit(accepter_msg,s)
+# accepter(s)'''
+# #on lance le serveur
+
+def launch_socket_server(port):
+    s = lancer_socket(port)  # Lance le serveur socket sur le port spécifié
+    accepter_msg(s)
 
 class Hello(Resource):
     def get(self):
@@ -209,19 +282,43 @@ class Stop_Test(Resource):
                         "numbers of time phone detected" : phone_sus,
                         "number of times head movement occured" : head_move,
                         "number of times talked" : talk})
+    
+class CheckDeviceConnected(Resource):
+    @cross_origin()
+    def get(self, action):
+        global teles_conn, tel_conns
+        if action == 'phones_co':
+            print(teles_conn)
+            if len(teles_conn) == 2:
+                return jsonify({"Téléphones connectés": teles_conn})
+            elif len(teles_conn) == 0:
+                return jsonify("Aucun téléphone connecté")
+            else:
+                return jsonify({"Téléphones connectés": teles_conn})
+        elif action == 'bool_phones_co':
+            return jsonify({"État de connexion": tel_conns})
+        else:
+            return jsonify({"error": "Action non reconnue"})
 
 
 api.add_resource(Hello,'/')
 api.add_resource(Stream,'/stream')
 api.add_resource(Start_Test,'/start-test')
 api.add_resource(Stop_Test,'/submit-test')
+api.add_resource(CheckDeviceConnected, '/check-connection/<string:action>')
 
 
 
-
-
-
+# if __name__ == '__main__':
+#     from threading import Thread
+#     socket_thread = 
+#     socket_thread.start()
+#     app.run(host='0.0.0.0', port=9000, debug=False)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9000, debug=False)
+    port = 12345 # Définissez le port sur lequel vous voulez que le serveur socket écoute
+    socket_thread = Thread(target=launch_socket_server, args=(port,))
+    socket_thread.start()  # Démarre le serveur socket dans un thread séparé
+    
+    app.run(host='0.0.0.0', port=9000, debug=True) 
 
